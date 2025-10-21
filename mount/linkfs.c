@@ -18,6 +18,7 @@
 #include <sys/cdefs.h> 
 #include <sys/mount.h> 
 
+/*This is used for testing ...  */
 #define  FS_EXT4  "ext4" 
 
 
@@ -44,6 +45,7 @@ struct __imgdev_t
 
 static  struct __imgdev_t  * get_free_loop_device(struct __imgdev_t * __restrict__) ; 
 static int loop_device_perform_link(struct __imgdev_t * __restrict__) ; 
+static int loop_device_perform_unlink(struct  __imgdev_t *__restrict__) ;  
 
 int main(int ac ,char **av) 
 {
@@ -77,7 +79,7 @@ int main(int ac ,char **av)
      pstatus^=perr_r(mount_error , "Fail to mount image disk %s\012", errloc) ;  
      goto _eplg ; 
    }
-  
+   
 _eplg: 
   return pstatus ; 
 }
@@ -126,4 +128,17 @@ static int loop_device_perform_link(imgdev_t * restrict  imgldev)
   }
   
   return 0 ;  
+}
+
+static int loop_device_perform_unlink(imgdev_t *restrict  ldev)  
+{
+  unsigned  int ulink_stat = ~0 ; 
+  unsigned  int  loopdevice =  (ldev->_fd_links & 0xff) , 
+                 imgdisk    =  (ldev->_fd_links >> 8) ;  
+
+  ulink_stat^=ioctl(loopdevice ,  LOOP_CLR_FD , imgdisk)  ; 
+  if(!ulink_stat)  
+    return 1  ; // LINKFS_DISSOC_ERROR ;
+
+  return 0; 
 }
