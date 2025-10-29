@@ -27,13 +27,27 @@
 # define CLS_VERSION_STR  _STRINGIFY(CLS_VERSION) 
 #endif 
 
+/*  LIST OF USED CAPABILITIES  */
+#define CSR   3
+#define CLS   5 
+#define PDL   106  
+#define PIX   109 
+#define PUC   114 
+
+#define cap(capid) \
+  ((TERMTYPE*)cur_term)->Strings[capid]  
+
+#define tp(capstring , ...)  \
+  tparm(capstring , __VA_ARGS__) 
+
 #define PRINT_VERSION(...)  \
   printf("cls version %s by KerHack-Libre version \012", CLS_VERSION_STR ) 
 
 #define CLS_USAGE \
-  "Usage : %s [OPTION]\012\012"                     \
+  "Usage : %s [OPTION]...[NUMBER]\012\012"          \
   "   -h    \011Show this help\012"                 \
-  "   -x [n]\011do not try to clear scrollback\012"
+  "   -v    \011Current version\012"                \
+  "   -g [n]\011Insert an empty gap between\012"
 
 
 static void show_usage(char * const *av)   
@@ -45,19 +59,19 @@ static void show_usage(char * const *av)
 
 static void prevent_clearing_scrolback_buffer(const int  nlines) 
 {
-   putp(tparm(parm_index ,nlines)); 
-   putp(tparm(change_scroll_region,  0 , nlines));  
+   putp(tp(cap(PIX) ,nlines)) ; 
+   putp(tp(cap(CSR) ,0 ,nlines));  
 }
 
 static void clearing_gap(const int nlines)  
 {
-   putp(tparm(parm_index,nlines)) ;  
+   putp(tp(cap(PIX),  nlines)) ; 
 }
 
 static void  clearing_back(const int nlines)  
 {
-   putp(tparm(parm_up_cursor , nlines)) ; 
-   putp(tparm(parm_delete_line, nlines));  
+  putp(tp(cap(PUC), nlines)) ;
+  putp(tp(cap(PDL), nlines)) ; 
 }
 
 int main(int ac , char * const *av) 
@@ -84,48 +98,51 @@ int main(int ac , char * const *av)
  
   if(!(ac &~(1)))
   {
-     putp(clear_screen); 
-     putp(clr_eol); 
-     putp(clr_eos); 
-     goto _eplg ;
+     putp(cap(CLS));  
+     goto _restore_shell ; 
   }
-  
+
   flags  = *(av+1) ; 
 
-  if( *(flags) ^ '-')
+  if ( !((*flags) ^'-'))  
   {
-    show_usage(av) ; 
-    goto _eplg; 
-  }
-
-  /* Supported flags */
-  switch( *(flags+1) & 0xff )  
-  {
-     case  'x': 
-       nrows = lines; 
-       if(ac >=3 )  
-       {
-         nrows = strtol(*(av+2) ,00, 10) ;  
-         nrows = nrows?  nrows : lines;
-       } 
-
-       if(!(lines ^ nrows) ||  nrows >  lines) 
-         prevent_clearing_scrolback_buffer(nrows); 
-       else 
-         /* Placing gap between  previous output */
-         clearing_gap(nrows);  
+    switch( *(flags+1) & 0xff )  
+    {
+       case  'g': 
+         nrows = lines; 
+         if(ac >=3 )  
+         {
+           nrows = strtol(*(av+2) ,00, 10) ;  
+           nrows = nrows?  nrows : lines;
+         } 
+         if(!(lines ^ nrows) ||  nrows >  lines)
+           prevent_clearing_scrolback_buffer(nrows); 
+         else 
+           /* Placing gap between  previous output */
+           clearing_gap(nrows);  
        
-       break; 
-     case  'V':
-       PRINT_VERSION() ;  
-       break;
-     case 'h': 
-     default : 
+        break;
+       case  'v':
+        PRINT_VERSION() ;  
+        break;
+       case 'h': 
+       default : 
+        show_usage(av) ,PRINT_VERSION(); break ; 
+    }
+    
+  }else{
+    /*When a number was given as argument, a clearing back will be  performed  */ 
+    int query_backlines= strtol(flags , (void *)00 ,  10 ) ; 
+    if(!query_backlines) 
+    {
        show_usage(av) ; 
-       PRINT_VERSION(); break ; 
+       goto _restore_shell ;
+    }
+    clearing_back(query_backlines); 
   }
 
-  /* restore shell */  
+
+_restore_shell: 
   (void) reset_shell_mode ;
 
 _eplg: 
