@@ -49,9 +49,15 @@ static void prevent_clearing_scrolback_buffer(const int  nlines)
    putp(tparm(change_scroll_region,  0 , nlines));  
 }
 
-static void clearing_section(const int nlines)  
+static void clearing_gap(const int nlines)  
 {
-   putp(tparm(parm_index,nlines)) ;
+   putp(tparm(parm_index,nlines)) ;  
+}
+
+static void  clearing_back(const int nlines)  
+{
+   putp(tparm(parm_up_cursor , nlines)) ; 
+   putp(tparm(parm_delete_line, nlines));  
 }
 
 int main(int ac , char * const *av) 
@@ -62,7 +68,6 @@ int main(int ac , char * const *av)
       nrows=0;   
   char *flags=00; 
   
-  setvbuf(stdout ,(void *)0 ,  _IONBF , 0) ;  
 
   if(ERR == setupterm((void *)0 ,  1 , &erret)) 
   {
@@ -80,6 +85,8 @@ int main(int ac , char * const *av)
   if(!(ac &~(1)))
   {
      putp(clear_screen); 
+     putp(clr_eol); 
+     putp(clr_eos); 
      goto _eplg ;
   }
   
@@ -105,7 +112,8 @@ int main(int ac , char * const *av)
        if(!(lines ^ nrows) ||  nrows >  lines) 
          prevent_clearing_scrolback_buffer(nrows); 
        else 
-         clearing_section(nrows);  
+         /* Placing gap between  previous output */
+         clearing_gap(nrows);  
        
        break; 
      case  'V':
@@ -117,7 +125,7 @@ int main(int ac , char * const *av)
        PRINT_VERSION(); break ; 
   }
 
- 
+  /* restore shell */  
   (void) reset_shell_mode ;
 
 _eplg: 
