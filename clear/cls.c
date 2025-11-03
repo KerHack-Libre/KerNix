@@ -1,7 +1,7 @@
 // SPDX-License-Identifier : GPL-2.0+
 /* 
  * Un clone de la commande 'clear' present sur la pluspart
- * des systemes d'exploitation unix. 
+ * des systemes d'exploitation unix avec  quelques option supplementaire  
  * 
  * Copyright (C) 2025  KerHack-Libre 
  * Author:   Umar BA <jUmarB@protonmail.com> 
@@ -28,14 +28,16 @@
 #endif 
 
 /*  LIST OF USED CAPABILITIES  */
-#define CSR   3
-#define CLS   5 
-#define PDL   106  
-#define PIX   109 
-#define PUC   114 
+#define CSR   3                 /* Change scroll region */
+#define CLS   5                 /* Clear  screen        */
+#define PDL   106               /* Parm delete line     */
+#define PIX   109               /* Parm index           */ 
+#define PUC   114               /* Parm up cursor       */ 
+
+
 
 #define cap(capid) \
-  ((TERMTYPE*)cur_term)->Strings[capid]  
+  *( ((TERMTYPE*)cur_term)->Strings+capid) 
 
 #define tp(capstring , ...)  \
   tparm(capstring , __VA_ARGS__) 
@@ -63,7 +65,7 @@ static void prevent_clearing_scrolback_buffer(const int  nlines)
    putp(tp(cap(CSR) ,0 ,nlines));  
 }
 
-static void clearing_gap(const int nlines)  
+static void insert_padding_gap(const int nlines)  
 {
    putp(tp(cap(PIX),  nlines)) ; 
 }
@@ -119,7 +121,7 @@ int main(int ac , char * const *av)
            prevent_clearing_scrolback_buffer(nrows); 
          else 
            /* Placing gap between  previous output */
-           clearing_gap(nrows);  
+           insert_padding_gap(nrows);  
        
         break;
        case  'v':
