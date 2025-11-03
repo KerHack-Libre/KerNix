@@ -46,11 +46,13 @@
 #define PRINT_VERSION(...)  \
   printf("cls version %s by KerHack-Libre version \012", CLS_VERSION_STR ) 
 
+#define cls_err(...)\
+  do fprintf(stderr, __VA_ARGS__);while(0)
+
 #define CLS_USAGE \
   "Usage : %s [OPTION]...[NUMBER]\012\012"          \
   "   -h    \011Show this help\012"                 \
   "   -v    \011Current version\012"                \
-  "   -r    \011Restore default shell behavior\012" \
   "   -g [n]\011Insert an empty gap between\012"    \
   "   -s [n]\011Create a sticky area\012"           \
 
@@ -63,6 +65,7 @@ static void show_usage(char * const *av)
 
 static void prevent_clearing_scrolback_buffer(const int  nlines) 
 {
+   putp(tp(cap(PDL) ,nlines)) ; 
    putp(tp(cap(PIX) ,nlines)) ; 
    putp(tp(cap(CSR) ,0 ,nlines));  
 }
@@ -107,9 +110,9 @@ int main(int ac , char * const *av , char  * const * env)
   {
      switch(erret)  
      {
-       case ~0 : fprintf(stderr, "Cannot find terminfo database\012");break; 
-       case  0 : fprintf(stderr, "No Enought data found to perform operation\012");break; 
-       case  1 : fprintf(stderr, "Can't use Curses\012"); break ; 
+       case ~0 : cls_err("Cannot find terminfo database\012");break; 
+       case  0 : cls_err("No Enought data found to perform operation\012");break; 
+       case  1 : cls_err("Can't use Curses\012"); break ; 
      }
 
      pstatus^=EXIT_FAILURE; 
@@ -155,9 +158,6 @@ int main(int ac , char * const *av , char  * const * env)
         
         sz_spawn = sticky_zone(nrows) ; 
         break ;
-       case  'r': 
-        (void) reset_shell_mode; 
-        break ; 
          
        case  'v':
         PRINT_VERSION() ;  
