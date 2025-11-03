@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <term.h>
+#include <unistd.h> 
 
 #define  __STR(__x) #__x 
 #define _STRINGIFY(__DEFINE)                        \
@@ -49,8 +50,9 @@
   "Usage : %s [OPTION]...[NUMBER]\012\012"          \
   "   -h    \011Show this help\012"                 \
   "   -v    \011Current version\012"                \
-  "   -g [n]\011Insert an empty gap between\012"
-
+  "   -r    \011Restore default shell behavior\012" \
+  "   -g [n]\011Insert an empty gap between\012"    \
+  "   -s [n]\011Create a sticky area\012"           \
 
 static void show_usage(char * const *av)   
 {
@@ -76,12 +78,28 @@ static void  clearing_back(const int nlines)
   putp(tp(cap(PDL), nlines)) ; 
 }
 
-int main(int ac , char * const *av) 
+/* @fn  sticky_zone(int nline  ,  int orientation) */
+static  int  sticky_zone(int nlines)  
+{
+  putp(tp(cap(CSR),  0 ,nlines)) ; 
+  clearing_back(nlines) ; 
+  putp(tp(cap(PDL), 0)) ; 
+  return nlines ;  
+}
+
+
+static void restore_shell_default_behavior(void)  
+{
+  (void) reset_shell_mode; 
+}
+
+int main(int ac , char * const *av , char  * const * env)   
 { 
 
   int pstatus=EXIT_SUCCESS ,
       erret = 0,
-      nrows=0;   
+      nrows=0,
+      sz_spawn=0;  /*  sticky zone spawn */
   char *flags=00; 
   
 
@@ -97,11 +115,12 @@ int main(int ac , char * const *av)
      pstatus^=EXIT_FAILURE; 
      goto  _eplg; 
   }
- 
+
   if(!(ac &~(1)))
   {
-     putp(cap(CLS));  
-     goto _restore_shell ; 
+       
+    prevent_clearing_scrolback_buffer(lines);  
+    goto _restore_shell ; 
   }
 
   flags  = *(av+1) ; 
@@ -124,6 +143,22 @@ int main(int ac , char * const *av)
            insert_padding_gap(nrows);  
        
         break;
+       case  's': 
+        if(ac < 3 ) 
+        {
+           show_usage(av), PRINT_VERSION(); 
+           break ; 
+        }
+        nrows = strtol(*(av+2), 00 , 10 ) ; 
+        if(!nrows) 
+          break ;  
+        
+        sz_spawn = sticky_zone(nrows) ; 
+        break ;
+       case  'r': 
+        (void) reset_shell_mode; 
+        break ; 
+         
        case  'v':
         PRINT_VERSION() ;  
         break;
@@ -144,8 +179,8 @@ int main(int ac , char * const *av)
   }
 
 
-_restore_shell: 
-  (void) reset_shell_mode ;
+_restore_shell:
+  restore_shell_default_behavior();  
 
 _eplg: 
   return pstatus ; 
