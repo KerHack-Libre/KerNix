@@ -5,13 +5,24 @@
  *
  * Copyright (C) 2025, KerHack-Libre
  * Author:  Umar Ba <jUmarB@protonmail.com> 
+ *
+ * @TODO:  
+ * [-/+] - add verbose mode : qui montre tous mots  a l'image de cat  
+ *    *|> si il support  curses colorier les mots  
+ *    [] utiliser les memory streams 
+ *
  */ 
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
-#include <ctype.h> 
+#include <ctype.h>
+
+#if SUPPORT_CURSES 
+#include <term.h> 
+#include <curses.h> 
+#endif  
 
 #define  CHARS  (1<<0) 
 #define  WORDS  (1<<2) 
@@ -27,6 +38,7 @@
 
 #define woc_errloc  strerror(*__errno_location()) 
 
+static unsigned int enable_verbose_mode = 0 ;   /* Print  and color  if possible */ 
 
 typedef struct __woc_attr_t  woc_attr_t ; 
 struct __woc_attr_t  { unsigned int _c ,_w, _l;}; 
@@ -84,9 +96,12 @@ static char * woc_scan_options(char  *const *av , int * options)
        {
          switch(*(arg+nargs) & 0xff) 
          {
-           case 'c':user_options|=CHARS ; break ; 
+           case 'c':user_options|=CHARS ; break; 
            case 'l':user_options|=LINES ; break; 
            case 'w':user_options|=WORDS ; break; 
+           case 'v': 
+                    enable_verbose_mode=1 ; 
+                    break ; 
          } 
          nargs-=~0; 
        }
@@ -108,6 +123,8 @@ static int word_count(woc_attr_t * optattr , const char *restrict file ,int opti
     int current , previous ; 
   }  woc = { EOF , 0 } ; 
 
+  char inline_buffer[2048] ={0} ;
+  int  buffer_cursor = 0 ;  
   FILE *fp = fopen(file , "r") ;
   if(!fp) 
   {
@@ -122,14 +139,40 @@ static int word_count(woc_attr_t * optattr , const char *restrict file ,int opti
       
     if(options & LINES)
       if(!((woc.current & 0xff) ^ 0xa))
+      {
         optattr->_l-=~0;
+        if(enable_verbose_mode) 
+        {
+          if (isspace(*inline_buffer))  
+          { 
+            fprintf(stdout , "%i",optattr->_l); 
+            char *inline_buffer_no_space = inline_buffer +1 ;    
+            printf("  %s\n",inline_buffer_no_space) ; 
+          }else 
+          {
+            fprintf(stdout , "%i",optattr->_l); 
+            printf(" %s\n",  inline_buffer ) ;  
+          }
+
+          buffer_cursor&=~buffer_cursor ;  
+          bzero(inline_buffer , 2048) ; 
+        }
+      }
 
     if(options & WORDS) 
     { 
       if(!isspace(woc.previous)  &&  isspace(woc.current))  
         optattr->_w-=~0 ; 
       woc.previous = woc.current ;   
-    }
+      if(enable_verbose_mode)  
+      { 
+        //TODO : utliser open_memstream  
+         sprintf((inline_buffer+buffer_cursor) ,"%c", woc.current) ; 
+         buffer_cursor-=~0 ; 
+      }
+       
+    } 
+    
   }
 
   fclose(fp) ;
