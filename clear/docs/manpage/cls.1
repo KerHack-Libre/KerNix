@@ -1,0 +1,68 @@
+.TH CLS 1 "Novembre 2025" "cls 1.2.1" "User Commands"
+.SH NAME
+cls \- terminal cleaner with enhanced visual and interactive control
+.SH SYNOPSIS
+.B cls
+[\fIOPTION\fR]... [\fINUMBER\fR]
+.SH DESCRIPTION
+.B cls
+est une commande de nettoyage de terminal offrant des fonctionnalités avancées par rapport à la commande
+.BR clear (1).
+Elle permet un contrôle précis de l’affichage, incluant l’effacement sélectif, l’insertion d’espaces vides,
+et la création de zones persistantes dans le terminal.
+
+Les principales améliorations comprennent :
+.IP \(bu 2
+L’effacement en arrière ou partiel de l’écran.
+.IP \(bu 2
+L’insertion de "gaps" (espaces vides) pour aérer la sortie.
+.IP \(bu 2
+La création d’une "sticky area" en bas du terminal, utile pour garder visible une zone d’entrée ou de monitoring.
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Affiche l’aide et quitte.
+.TP
+.BR \-v ", " \-\-version
+Affiche la version courante et quitte.
+.TP
+.BR \-g " [n], " \-\-gap " [=n]"
+Insère un espace vide de \fIn\fR lignes entre deux sections du terminal.
+Si \fIn\fR n’est pas précisé, une seule ligne est insérée par défaut.
+.TP
+.BR \-s " [n], " \-\-sticky " [=n]"
+Crée une zone « sticky » (fixe) en bas du terminal, préservant \fIn\fR lignes visibles.
+Utile pour garder un prompt ou une zone d’état persistante pendant l’effacement du haut de l’écran.
+
+.SH EXAMPLES
+.TP
+.B cls
+Efface entièrement le terminal.
+.TP
+.B cls \-g 5
+Efface le terminal et ajoute un espace vide de 5 lignes.
+.TP
+.B cls \-s 10
+Efface la partie supérieure du terminal tout en conservant les 10 dernières lignes visibles.
+.TP
+.B cls \-g 2 \-s 5
+Ajoute 2 lignes vides puis conserve une zone de 5 lignes en bas du terminal.
+
+.SH VERSION
+cls version 1.2.1
+
+.SH AUTHOR
+Développé par KerHack-Libre.
+
+.SH REPORTING BUGS
+Signalez les problèmes ou suggestions sur la page du projet.
+
+.SH COPYRIGHT
+Copyright © 2025 KerHack-Libre.
+Licence libre — redistribution et modification autorisées sous les termes de la licence choisie par l’auteur.
+
+.SH SEE ALSO
+.BR clear (1),
+.BR tput (1)
+
