@@ -40,11 +40,21 @@
 
 static unsigned int enable_verbose_mode = 0 ;   /* Print  and color  if possible */ 
 
+typedef struct __io_memory_buffer_t  io_mem_buffer_t ; 
 typedef struct __woc_attr_t  woc_attr_t ; 
-struct __woc_attr_t  { unsigned int _c ,_w, _l;}; 
 
-static int word_count(struct __woc_attr_t * , const char *__restrict__  ,  int) ; 
-static char * woc_scan_options(char *const * av , int* )  ;
+struct __woc_attr_t  { unsigned int _c ,_w, _l;}; 
+struct __io_memory_buffer_t{ 
+  char *buff_ptr ; 
+  FILE *memory_stream ;  
+  size_t sizeloc_membuf; 
+}; 
+
+
+
+static int    woc_word_count(struct __woc_attr_t * , const char *__restrict__  ,  int) ; 
+static char * woc_scan_options(char *const * , int* )  ;
+static void   woc_verbosity(unsigned char  ,io_mem_buffer_t *__restrict__);  
 
 int main(int ac ,char *const *av) 
 {
@@ -62,7 +72,7 @@ int main(int ac ,char *const *av)
   } 
   file_target = woc_scan_options((av+1) ,  &woc_options); 
 
-  if(word_count(&optattr , file_target , woc_options)) 
+  if(woc_word_count(&optattr , file_target , woc_options)) 
   {
     pstatus^=woc_err("%s\012", woc_errloc) ; 
     goto _eplg ; 
@@ -120,26 +130,20 @@ static char * woc_scan_options(char  *const *av , int * options)
 }
 
 
-static int word_count(woc_attr_t * optattr , const char *restrict file ,int options) 
+static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int options) 
 {
   struct {
     int current , previous ; 
   }  woc = { EOF , 0 } ; 
 
-
-  FILE *memory_stream = (FILE*) 0 ;  
-  char *sbuff_ptr  =  (char *)00; 
-  size_t sizeloc = 0 ;  
-
+  io_mem_buffer_t stream_membuf ; 
   if(enable_verbose_mode) 
   {
-     memory_stream =  open_memstream(&sbuff_ptr ,  &sizeloc) ; 
-     if(!memory_stream)  
-       enable_verbose_mode=0 ; 
-  }
+    stream_membuf.memory_stream=open_memstream(&stream_membuf.buff_ptr, &stream_membuf.sizeloc_membuf); 
+    if(!stream_membuf.memory_stream)
+      enable_verbose_mode=0 ;/* disable verbose mode  */ 
+  } 
 
-
-  int blank =0 ; 
   FILE *fp = fopen(file , "r") ;
   if(!fp) 
   {
@@ -160,33 +164,37 @@ static int word_count(woc_attr_t * optattr , const char *restrict file ,int opti
     { 
       if(!isspace(woc.previous)  &&  isspace(woc.current))  
         optattr->_w-=~0 ; 
-      woc.previous = woc.current ;   
-      if(enable_verbose_mode)  
-      { 
-        if(0 == blank) 
-        { 
-          blank=1;  
-          fprintf(memory_stream, "%i\011" ,  optattr->_l+1) ; 
-        }
-         
-        if(enable_verbose_mode)  
-        {
-          if( 012 == woc.current && blank >0)  
-            blank=0;  
-
-          fprintf(memory_stream, "%c", woc.current) ;  
-        }
-      }
-       
-    } 
+    
+      woc.previous = woc.current ;  
+    }
+    
+    if(enable_verbose_mode) 
+      woc_verbosity(woc.current , &stream_membuf) ;  
     
   }
 
   fclose(fp) ;
+  
   if(enable_verbose_mode) 
   {
-    fclose(memory_stream) ; 
-    fprintf(stdout , "%s"  , sbuff_ptr) ; 
-  }
+    fclose(stream_membuf.memory_stream);   
+    fprintf(stdout , "%s"  , stream_membuf.buff_ptr) ; 
+  } 
+
   return 0; 
+}
+
+void woc_verbosity(unsigned char byte_char , io_mem_buffer_t * membuf) 
+{ 
+  static unsigned int eol =0,
+                      lines=1; 
+  if(!eol) 
+    fprintf(membuf->memory_stream , "%i\011",lines) ,
+      lines-=~0,eol^=1 ; 
+
+  if(!((0xa) ^ (byte_char & 0xff))  && eol > 0 ) 
+    eol^=1 ;
+
+  fprintf(membuf->memory_stream , "%c" , byte_char) ;  
+  
 }
