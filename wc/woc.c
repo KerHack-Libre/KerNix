@@ -51,8 +51,8 @@ int main(int ac ,char *const *av)
   unsigned int pstatus = EXIT_SUCCESS , 
               woc_options=WOC_ENABLE_ALL_BY_DEFAULT ; 
   woc_attr_t optattr = {0}; 
-  char *file_target =  (char *)00 ;
-  
+
+  char *file_target =  (char *)00; 
   setvbuf(stdout ,  (char*)00  , _IONBF , 0) ; 
 
   if(!(ac &~(1)))  
@@ -60,7 +60,8 @@ int main(int ac ,char *const *av)
      pstatus^=woc_err(USAGE(*(av))); 
      goto _eplg ; 
   } 
-  file_target = woc_scan_options((av+1) ,  &woc_options);
+  file_target = woc_scan_options((av+1) ,  &woc_options); 
+
   if(word_count(&optattr , file_target , woc_options)) 
   {
     pstatus^=woc_err("%s\012", woc_errloc) ; 
@@ -100,7 +101,7 @@ static char * woc_scan_options(char  *const *av , int * options)
            case 'l':user_options|=LINES ; break; 
            case 'w':user_options|=WORDS ; break; 
            case 'v': 
-                    enable_verbose_mode=1 ; 
+                    enable_verbose_mode=1;  
                     break ; 
          } 
          nargs-=~0; 
@@ -117,14 +118,28 @@ static char * woc_scan_options(char  *const *av , int * options)
 
   return pretended_file ; 
 }
+
+
 static int word_count(woc_attr_t * optattr , const char *restrict file ,int options) 
 {
   struct {
     int current , previous ; 
   }  woc = { EOF , 0 } ; 
 
-  char inline_buffer[2048] ={0} ;
-  int  buffer_cursor = 0 ;  
+
+  FILE *memory_stream = (FILE*) 0 ;  
+  char *sbuff_ptr  =  (char *)00; 
+  size_t sizeloc = 0 ;  
+
+  if(enable_verbose_mode) 
+  {
+     memory_stream =  open_memstream(&sbuff_ptr ,  &sizeloc) ; 
+     if(!memory_stream)  
+       enable_verbose_mode=0 ; 
+  }
+
+
+  int blank =0 ; 
   FILE *fp = fopen(file , "r") ;
   if(!fp) 
   {
@@ -139,25 +154,7 @@ static int word_count(woc_attr_t * optattr , const char *restrict file ,int opti
       
     if(options & LINES)
       if(!((woc.current & 0xff) ^ 0xa))
-      {
         optattr->_l-=~0;
-        if(enable_verbose_mode) 
-        {
-          if (isspace(*inline_buffer))  
-          { 
-            fprintf(stdout , "%i",optattr->_l); 
-            char *inline_buffer_no_space = inline_buffer +1 ;    
-            printf("  %s\n",inline_buffer_no_space) ; 
-          }else 
-          {
-            fprintf(stdout , "%i",optattr->_l); 
-            printf(" %s\n",  inline_buffer ) ;  
-          }
-
-          buffer_cursor&=~buffer_cursor ;  
-          bzero(inline_buffer , 2048) ; 
-        }
-      }
 
     if(options & WORDS) 
     { 
@@ -166,9 +163,19 @@ static int word_count(woc_attr_t * optattr , const char *restrict file ,int opti
       woc.previous = woc.current ;   
       if(enable_verbose_mode)  
       { 
-        //TODO : utliser open_memstream  
-         sprintf((inline_buffer+buffer_cursor) ,"%c", woc.current) ; 
-         buffer_cursor-=~0 ; 
+        if(0 == blank) 
+        { 
+          blank=1;  
+          fprintf(memory_stream, "%i\011" ,  optattr->_l+1) ; 
+        }
+         
+        if(enable_verbose_mode)  
+        {
+          if( 012 == woc.current && blank >0)  
+            blank=0;  
+
+          fprintf(memory_stream, "%c", woc.current) ;  
+        }
       }
        
     } 
@@ -176,5 +183,10 @@ static int word_count(woc_attr_t * optattr , const char *restrict file ,int opti
   }
 
   fclose(fp) ;
+  if(enable_verbose_mode) 
+  {
+    fclose(memory_stream) ; 
+    fprintf(stdout , "%s"  , sbuff_ptr) ; 
+  }
   return 0; 
 }
