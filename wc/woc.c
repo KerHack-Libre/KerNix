@@ -5,12 +5,6 @@
  *
  * Copyright (C) 2025, KerHack-Libre
  * Author:  Umar Ba <jUmarB@protonmail.com> 
- *
- * @TODO:  
- * [-/+] - add verbose mode : qui montre tous mots  a l'image de cat  
- *    *|> si il support  curses colorier les mots  
- *    [] utiliser les memory streams 
- *
  */ 
 
 #include <errno.h>
