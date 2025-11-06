@@ -18,11 +18,12 @@
 #include <curses.h> 
 #endif  
 
-#define  CHARS  (1<<0) 
-#define  WORDS  (1<<2) 
-#define  LINES  (1<<3) 
+#define  CHARS      (1<<0) 
+#define  WORDS      (1<<2) 
+#define  LINES      (1<<3) 
+#define  LINESTRIP  (1<<4)
 
-#define  WOC_ENABLE_ALL_BY_DEFAULT (CHARS|WORDS|LINES) 
+#define  WOC_ENABLE_ALL_BY_DEFAULT (CHARS|WORDS|LINES|LINESTRIP) 
 
 #define USAGE(basename)\
   "%s [OPTION]...[FILE]\012",basename 
@@ -37,7 +38,7 @@ static unsigned int enable_verbose_mode = 0 ;   /* Print  and color  if possible
 typedef struct __io_memory_buffer_t  io_mem_buffer_t ; 
 typedef struct __woc_attr_t  woc_attr_t ; 
 
-struct __woc_attr_t  { unsigned int _c ,_w, _l;}; 
+struct __woc_attr_t  { unsigned int _c ,_w, _l , _ls;}; 
 struct __io_memory_buffer_t{ 
   char *buff_ptr ; 
   FILE *memory_stream ;  
@@ -77,7 +78,18 @@ int main(int ac ,char *const *av)
   if(woc_options & CHARS)
     fprintf(stdout, "%i ",optattr._c); 
   if(woc_options & WORDS) 
-    fprintf(stdout ,"%i ",optattr._w); 
+    fprintf(stdout ,"%i ",optattr._w);
+  
+  /* empty lines */
+  if(woc_options & LINESTRIP)
+  {
+    fprintf(stdout , "%i ", optattr._ls) ;  
+    /*lines that contains something aka real lines  */ 
+    fprintf(stdout ,"%i " ,abs(optattr._ls -  optattr._l)) ; 
+  }
+
+  
+
 
   fprintf(stdout , "%s\012",file_target) ; 
   
@@ -103,7 +115,11 @@ static char * woc_scan_options(char  *const *av , int * options)
          {
            case 'c':user_options|=CHARS ; break; 
            case 'l':user_options|=LINES ; break; 
-           case 'w':user_options|=WORDS ; break; 
+           case 'w':user_options|=WORDS ; break;
+           case 's':
+                    /*The strip flags depend on  LINES flags to be enable */
+                    user_options|=LINES ;  
+                    user_options|=LINESTRIP;break; 
            case 'v': 
                     enable_verbose_mode=1;  
                     break ; 
@@ -130,6 +146,7 @@ static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int 
     int current , previous ; 
   }  woc = { EOF , 0 } ; 
 
+  int  previous_line =0 ; 
   io_mem_buffer_t stream_membuf ; 
   if(enable_verbose_mode) 
   {
@@ -151,8 +168,20 @@ static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int 
       optattr->_c=-~optattr->_c; 
       
     if(options & LINES)
-      if(!((woc.current & 0xff) ^ 0xa))
-        optattr->_l-=~0;
+    {
+      if(options & LINESTRIP) 
+        if(!(0xa  ^(previous_line & 0xff)) && 
+           !(0xa  ^(woc.current & 0xff))) 
+          optattr->_ls-=~0; 
+      
+      if(!((woc.current & 0xff) ^ 0xa)) 
+      {
+        optattr->_l-=~0; 
+        previous_line=woc.current; 
+      }else 
+         previous_line  = woc.current;  
+      
+    }
 
     if(options & WORDS) 
     { 
