@@ -116,7 +116,10 @@ static char * woc_scan_options(char  *const *av , int * options)
            case 'c':user_options|=CHARS ; break; 
            case 'l':user_options|=LINES ; break; 
            case 'w':user_options|=WORDS ; break;
-           case 's':user_options|=LINESTRIP;break; 
+           case 's':
+                    /*The strip flags depend on  LINES flags to be enable */
+                    user_options|=LINES ;  
+                    user_options|=LINESTRIP;break; 
            case 'v': 
                     enable_verbose_mode=1;  
                     break ; 
