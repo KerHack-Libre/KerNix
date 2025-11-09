@@ -87,7 +87,7 @@ jUmarB@protonmail.com
 _KerHack-Libre_ — “comprendre, construire, transmettre.”
 
 ### ⚖️ Licence
-<img src="assets/img/logo/kernix.png" width="300"  alt="knix-logo" align="right"/> 
+<img src="assets/img/logo/kernix.png" width="170"  alt="knix-logo" align="right"/> 
 
 L’ensemble des projets de KërNix sont distribués sous GPLv3,
 en accord avec les 4 libertés fondamentales du logiciel libre.
