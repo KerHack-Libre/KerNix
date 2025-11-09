@@ -1,6 +1,6 @@
 
 
-<img src="assets/img/kernix.png" width="300"  alt="knix-logo" align="center"/>   
+<img src="assets/img/logo/kernix.png" width="300"  alt="knix-logo" align="center"/>   
 
 
 #  KërNix — *La Maison d’Unix*
@@ -32,6 +32,7 @@ Notre objectif :
 
 Chaque répertoire correspond à une commande recréée :
 
+```bash 
 KërNix/
 ├── cat/
 ├── ls/
@@ -39,6 +40,7 @@ KërNix/
 ├── echo/
 └── ... 
 
+```
 
 > 🧠 Chaque outil dispose de sa propre **page man** (`./docs/manpage/<cmd>.1`)
 > consultable directement depuis le terminal.
@@ -65,7 +67,7 @@ $ cd <repertoire_cible>
 $ meson setup build
 $ meson install -C build
 ```
-
+> ![IMPORTANT] 
 > Pour désinstaller  : `ninja  -C build uninstall` 
 
 ### Pour consulter la documentation
@@ -85,6 +87,7 @@ jUmarB@protonmail.com
 _KerHack-Libre_ — “comprendre, construire, transmettre.”
 
 ### ⚖️ Licence
+<img src="assets/img/logo/kernix.png" width="300"  alt="knix-logo" align="right"/> 
 
 L’ensemble des projets de KërNix sont distribués sous GPLv3,
 en accord avec les 4 libertés fondamentales du logiciel libre.
@@ -93,5 +96,4 @@ en accord avec les 4 libertés fondamentales du logiciel libre.
 > Le code est un artisanat. Chez KërNix, on le travaille à la main, avec soin, curiosité et respect du libre.
 
 
-Discussions, idées et contributions bienvenues sur :
-github.com/KerHack-Libre
+Discussions, idées et contributions  sont les bienvenues. 
