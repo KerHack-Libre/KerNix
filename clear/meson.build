@@ -1,7 +1,9 @@
-
+# Copyright(c) 2025  Umar Ba <jUmarB@protonmail.com>  @KerHack-Libre
 project('cls', 'c',
   version : '1.2.1',
-  default_options : ['warning_level=3'])
+  license:['GPL-2.0-or-later'],
+  meson_version:'>=1.6.1',
+  default_options : ['c_std=gnu99','warning_level=3'])
 
 pkg_config=import('pkgconfig') 
 
@@ -16,11 +18,9 @@ add_project_arguments(
   language:'c',
   )
 
-curses=dependency('curses')  
+curses=dependency('curses') 
 
-
-
-
+install_man(['./docs/manpage/cls.1']) 
 executable('cls',
            'cls.c',
            dependencies:[curses], 

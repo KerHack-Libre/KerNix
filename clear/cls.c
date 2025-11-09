@@ -35,8 +35,6 @@
 #define PIX   109               /* Parm index           */ 
 #define PUC   114               /* Parm up cursor       */ 
 
-
-
 #define cap(capid) \
   *( ((TERMTYPE*)cur_term)->Strings+capid) 
 
@@ -81,7 +79,6 @@ static void  clearing_back(const int nlines)
   putp(tp(cap(PDL), nlines)) ; 
 }
 
-/* @fn  sticky_zone(int nline  ,  int orientation) */
 static  int  sticky_zone(int nlines)  
 {
   putp(tp(cap(CSR),  0 ,nlines)) ; 
@@ -168,7 +165,6 @@ int main(int ac , char * const *av , char  * const * env)
     }
     
   }else{
-    /*When a number was given as argument, a clearing back will be  performed  */ 
     int query_backlines= strtol(flags , (void *)00 ,  10 ) ; 
     if(!query_backlines) 
     {
