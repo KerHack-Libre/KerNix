@@ -33,7 +33,8 @@
 
 #define woc_errloc  strerror(*__errno_location()) 
 
-static unsigned int enable_verbose_mode = 0 ;   /* Print  and color  if possible */ 
+static unsigned int enable_verbose_mode = 0 ; 
+static char * wordchars  = 0 ; 
 
 typedef struct __io_memory_buffer_t  io_mem_buffer_t ; 
 typedef struct __woc_attr_t  woc_attr_t ; 
@@ -48,7 +49,7 @@ struct __io_memory_buffer_t{
 
 
 static int    woc_word_count(struct __woc_attr_t * , const char *__restrict__  ,  int) ; 
-static char * woc_scan_options(char *const * , int* )  ;
+static char * woc_scan_options(char ** , int,  int* )  ;
 static void   woc_verbosity(unsigned char  ,io_mem_buffer_t *__restrict__);  
 
 int main(int ac ,char *const *av) 
@@ -65,7 +66,7 @@ int main(int ac ,char *const *av)
      pstatus^=woc_err(USAGE(*(av))); 
      goto _eplg ; 
   } 
-  file_target = woc_scan_options((av+1) ,  &woc_options); 
+  file_target = woc_scan_options((char **)(av+1) ,ac,  &woc_options); 
 
   if(woc_word_count(&optattr , file_target , woc_options)) 
   {
@@ -73,6 +74,9 @@ int main(int ac ,char *const *av)
     goto _eplg ; 
   }
 
+  /*TODO: 
+   * [] create a dedicated function for  showing result
+   * */
   if(woc_options & LINES) 
     fprintf(stdout, "%i ",optattr._l); 
   if(woc_options & CHARS)
@@ -97,12 +101,16 @@ _eplg:
   return pstatus ; 
 }
 
-static char * woc_scan_options(char  *const *av , int * options) 
+static char * woc_scan_options(char **av, int ac ,int * options)
 {
   char **argv =(char **) av,
-       * pretended_file=(char *)00 ;  
+       * pretended_file=(char *)00; 
   
   int  user_options = 0  ;   
+
+  if( 3 <= ac) 
+    wordchars = *(av+(ac-2)) ; 
+
   while(*argv) 
   { 
     char *arg = *argv;  
@@ -127,12 +135,14 @@ static char * woc_scan_options(char  *const *av , int * options)
          nargs-=~0; 
        }
     }else 
-      if(!pretended_file)
-         pretended_file= *argv  ;    
-
+    {  
+      if(!pretended_file)   
+        pretended_file =  *argv ; 
+       
+    }
    (void*) *argv++ ;  
   }
-  
+
   if(0 < user_options) 
     *options^=(*options &~user_options); 
 
@@ -146,7 +156,13 @@ static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int 
     int current , previous ; 
   }  woc = { EOF , 0 } ; 
 
-  int  previous_line =0 ; 
+  int  previous_line =0,
+
+       woc_score     =0,
+       idx           =0; 
+
+  char word_collection[0x1000]={0}; 
+
   io_mem_buffer_t stream_membuf ; 
   if(enable_verbose_mode) 
   {
@@ -158,7 +174,7 @@ static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int 
   FILE *fp = fopen(file , "r") ;
   if(!fp) 
   {
-     woc_err("%s : %s\012", __func__, woc_errloc)  ;
+     woc_err("*%s : %s\012", __func__, woc_errloc)  ;
      return  ~0 ;  
   }
   
@@ -184,9 +200,22 @@ static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int 
     }
 
     if(options & WORDS) 
-    { 
-      if(!isspace(woc.previous)  &&  isspace(woc.current))  
+    {  
+      if(wordchars  &&  1 == strlen(wordchars) ) 
+         woc_score-= !(*wordchars ^ woc.current)?~0:0; 
+
+      if(!isspace(woc.previous)  &&  isspace(woc.current)) 
+      {
         optattr->_w-=~0 ; 
+        if(wordchars && strlen(wordchars)>1) 
+        {
+          woc_score-=strstr(word_collection,wordchars)? ~0: 0 ;  
+          bzero(word_collection , 0xff) , idx =0 ;  
+        }
+      } 
+        
+      if(strlen(wordchars)>1 && !isspace(woc.current)) 
+        *(word_collection +idx)=woc.current,idx-=~0 ; 
     
       woc.previous = woc.current ;  
     }
@@ -204,6 +233,10 @@ static int woc_word_count(woc_attr_t * optattr , const char *restrict file ,int 
     fprintf(stdout , "%s"  , stream_membuf.buff_ptr) ; 
   } 
 
+  if(wordchars) 
+  {
+    printf("score for %s  is %i \n", wordchars ,  woc_score)  ; 
+  }
   return 0; 
 }
 
