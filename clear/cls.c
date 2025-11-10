@@ -1,11 +1,10 @@
 // SPDX-License-Identifier : GPL-2.0+
 /* 
- * Un clone de la commande 'clear' present sur la pluspart
- * des systemes d'exploitation unix avec  quelques option supplementaire  
- * 
+ * Cls  - Terminal Cleaner Revisited
+ * Un clone de la commande 'clear' 
+ *
  * Copyright (C) 2025  KerHack-Libre 
  * Author:   Umar BA <jUmarB@protonmail.com> 
- *
  */
 
 
