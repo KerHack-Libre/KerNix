@@ -1,7 +1,7 @@
 // SPDX-License-Identifier : GPL-2.0+
 /* 
  * Cls  - Terminal Cleaner Revisited
- * Un clone de la commande 'clear' 
+ * Un clone de la commande 'clear' avec quelques ajouts. 
  *
  * Copyright (C) 2025  KerHack-Libre 
  * Author:   Umar BA <jUmarB@protonmail.com> 
@@ -41,17 +41,18 @@
   tparm(capstring , __VA_ARGS__) 
 
 #define PRINT_VERSION(...)  \
-  printf("cls version %s by KerHack-Libre version \012", CLS_VERSION_STR ) 
+  printf("cls version %s by KerHack-Libre \012", CLS_VERSION_STR ) 
 
 #define cls_err(...)\
   do fprintf(stderr, __VA_ARGS__);while(0)
 
 #define CLS_USAGE \
-  "Usage : %s [OPTION]...[NUMBER]\012\012"          \
-  "   -h    \011Show this help\012"                 \
-  "   -v    \011Current version\012"                \
-  "   -g [n]\011Insert an empty gap between\012"    \
-  "   -s [n]\011Create a sticky area\012"           \
+  "Usage : %s [OPTION]...[NUMBER]\012\012"                        \
+  "   -h    \011Show this help\012"                               \
+  "   -v    \011Current version\012"                              \
+  "   [n]   \011Clears back [n] lines or part of the screen.\012" \
+  "   -g [n]\011Insert an empty gap between\012"                  \
+  "   -s [n]\011Create a sticky area\012"                         \
 
 static void show_usage(char * const *av)   
 {
@@ -92,13 +93,13 @@ static void restore_shell_default_behavior(void)
   (void) reset_shell_mode; 
 }
 
-int main(int ac , char * const *av , char  * const * env)   
+int main(int ac , char * const *av)   
 { 
 
   int pstatus=EXIT_SUCCESS ,
       erret = 0,
       nrows=0,
-      sz_spawn=0;  /*  sticky zone spawn */
+      sz_spawn=0;  /*  sticky zone spawn   <unused>*/
   char *flags=00; 
   
 
